@@ -3,7 +3,7 @@
 Uses only lists, dictionaries, loops, conditionals and functions.
 Expenses are kept in memory, so they disappear when the program exits.
 """
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 CATEGORIES = ["Food", "Transport", "Bills", "Other"]
 MAX_AMOUNT = Decimal("1000000000")
@@ -28,7 +28,9 @@ def get_amount() -> Decimal:
         if amount > MAX_AMOUNT:
             print("Amount is too large.")
             continue
-        return amount.quantize(CENT)
+        # ROUND_HALF_UP is what people expect from money; the default
+        # (ROUND_HALF_EVEN) would turn 12.345 into 12.34.
+        return amount.quantize(CENT, rounding=ROUND_HALF_UP)
 
 
 def get_category() -> str:
