@@ -1,0 +1,2 @@
+# TrackFlow has no third-party dependencies; it uses only the Python standard library.
+# Requires Python 3.10 or newer.
