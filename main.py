@@ -1,79 +1,89 @@
-# TrackFlow - a simple command-line expense tracker
-# Uses only: lists, dictionaries, loops, if/else and functions.
-# Note: expenses are kept in memory, so they disappear when the program exits.
+"""TrackFlow - a simple command-line expense tracker.
+
+Uses only lists, dictionaries, loops, conditionals and functions.
+Expenses are kept in memory, so they disappear when the program exits.
+"""
+from decimal import Decimal, InvalidOperation
 
 CATEGORIES = ["Food", "Transport", "Bills", "Other"]
+MAX_AMOUNT = Decimal("1000000000")
+CENT = Decimal("0.01")
 
 
-def get_amount():
-    """Keep asking until the user types a valid positive number."""
+def get_amount() -> Decimal:
+    """Keep asking until the user types a valid positive amount."""
     while True:
-        text = input("Enter amount: ")
-        # isdigit() works on whole numbers only, so remove one dot first
-        if text.replace(".", "", 1).isdigit():
-            amount = float(text)
-            if amount > 0:
-                return amount
-            print("Amount must be greater than 0.")
-        else:
+        text = input("Enter amount: ").strip()
+        try:
+            amount = Decimal(text)
+        except InvalidOperation:
             print("Please enter a valid number.")
+            continue
+        if not amount.is_finite():
+            print("Please enter a valid number.")
+            continue
+        if amount <= 0:
+            print("Amount must be greater than 0.")
+            continue
+        if amount > MAX_AMOUNT:
+            print("Amount is too large.")
+            continue
+        return amount.quantize(CENT)
 
 
-def get_category():
+def get_category() -> str:
     """Show the category list and return the one the user picks."""
-    for number in range(len(CATEGORIES)):
-        print(f"  {number + 1}. {CATEGORIES[number]}")
+    for number, category in enumerate(CATEGORIES, start=1):
+        print(f"  {number}. {category}")
     while True:
-        choice = input("Choose category (1-4): ")
+        choice = input(f"Choose category (1-{len(CATEGORIES)}): ").strip()
         if choice.isdigit() and 1 <= int(choice) <= len(CATEGORIES):
             return CATEGORIES[int(choice) - 1]
         print("Invalid choice. Try again.")
 
 
-def add_expense(expenses):
+def add_expense(expenses: list[dict]) -> None:
     amount = get_amount()
     category = get_category()
-    description = input("Enter description: ")
-    expense = {"amount": amount, "category": category, "description": description}
-    expenses.append(expense)
-    print("[✓] Expense added successfully!")
+    description = input("Enter description: ").strip() or "(no description)"
+    expenses.append(
+        {"amount": amount, "category": category, "description": description}
+    )
+    print("[OK] Expense added successfully!")
 
 
-def view_expenses(expenses):
-    if len(expenses) == 0:
+def view_expenses(expenses: list[dict]) -> None:
+    if not expenses:
         print("No expenses recorded yet.")
         return
     print("\nAll expenses:")
-    for i in range(len(expenses)):
-        e = expenses[i]
-        print(f"{i + 1}. {e['category']} | {e['amount']:.2f} | {e['description']}")
+    for index, expense in enumerate(expenses, start=1):
+        print(
+            f"{index}. {expense['category']} | "
+            f"{expense['amount']:.2f} | {expense['description']}"
+        )
 
 
-def total_spending(expenses):
-    total = 0
-    for e in expenses:
-        total = total + e["amount"]
+def total_spending(expenses: list[dict]) -> None:
+    total = sum((expense["amount"] for expense in expenses), Decimal("0"))
     print(f"\nTotal spending: {total:.2f}")
 
 
-def category_summary(expenses):
-    if len(expenses) == 0:
+def category_summary(expenses: list[dict]) -> None:
+    if not expenses:
         print("No expenses recorded yet.")
         return
-    totals = {}  # example: {"Food": 150.0, "Bills": 1200.0}
-    for e in expenses:
-        category = e["category"]
-        if category in totals:
-            totals[category] = totals[category] + e["amount"]
-        else:
-            totals[category] = e["amount"]
+    totals: dict[str, Decimal] = {}  # example: {"Food": Decimal("150.00")}
+    for expense in expenses:
+        category = expense["category"]
+        totals[category] = totals.get(category, Decimal("0")) + expense["amount"]
     print("\nSpending by category:")
-    for category in totals:
-        print(f"  {category}: {totals[category]:.2f}")
+    for category, amount in totals.items():
+        print(f"  {category}: {amount:.2f}")
 
 
-def main():
-    expenses = []  # a list of dictionaries, one per expense
+def main() -> None:
+    expenses: list[dict] = []  # a list of dictionaries, one per expense
     print("Welcome to the Expense Tracker!")
 
     while True:
@@ -86,7 +96,7 @@ def main():
         print("4. Category Summary")
         print("5. Exit")
 
-        choice = input("\nEnter your choice (1-5): ")
+        choice = input("\nEnter your choice (1-5): ").strip()
 
         if choice == "1":
             add_expense(expenses)
@@ -103,4 +113,5 @@ def main():
             print("Invalid choice. Please enter a number from 1 to 5.")
 
 
-main()
+if __name__ == "__main__":
+    main()
